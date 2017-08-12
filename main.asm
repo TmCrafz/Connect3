@@ -20,8 +20,6 @@ segment .bss
 segment .text
     _start:
 asm_main:
-    mov eax, 0x1122BBFF
-    call debug_print_regs
     call game_run
 
 ; exit
