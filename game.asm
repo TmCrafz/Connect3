@@ -2,6 +2,7 @@ global game_run
 
 extern console_print
 extern console_print_nl
+extern console_read_char
 
 extern utils_number_to_decimal_ascii
 
@@ -43,27 +44,43 @@ game_run:
     mov byte [board + ecx], 0
     loop .init_board
 
-    push str_game_title_len
-    push str_game_title
-    call console_print
-    add esp, 8
+    call game_draw_board
+    ; Game loop
+.run:
+    call game_get_input
 
-
-    
     call game_draw_board
 
-    ; Game
+    jmp .run
 
     popa
     leave
     ret
 
+; Ask user which field he want to set
+; return choosen field in eax
+game_get_input:
+    enter 0, 0
+    ; No pusha and popa here, because eax is the only register which es editet and we want to
+    ; return eax
 
+    call console_read_char
+
+    leave
+    ret
 
 ; Draw the actual game board
 game_draw_board:
     enter 0, 0
     pusha
+    ; Draw title
+    push str_game_title_len
+    push str_game_title
+    call console_print
+    add esp, 8
+    
+    
+    
     ; We have 6 rows to print
     mov dword ecx, BOARD_ARRAY_ELEMENTS
 .print_row:
