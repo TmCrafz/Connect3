@@ -3,6 +3,8 @@ global game_run
 extern console_print
 extern console_print_nl
 
+extern utils_number_to_decimal_ascii
+
 extern debug_print_regs
 
 %define BOARD_ARRAY_ELEMENTS 9
@@ -19,14 +21,15 @@ extern debug_print_regs
 ;
 
 segment .data
-    board_row_cnt:          dd 7
     str_game_title:         db 'Connect3', 0xA
     str_game_title_len:     equ $-str_game_title
-
+    str_player1:            db 'Player 1. Which field?', 0xA
+    str_player2:            db 'Player 2. Which field?', 0xA
 segment .bss
-    board           resb BOARD_ARRAY_ELEMENTS   ; Create Array with elements with a byte size.
-                                                ; The Array has BOARD_ARRAY_ELEMENTS elements.
-
+    board               resb BOARD_ARRAY_ELEMENTS   ; Create Array with elements with a byte size.
+                                                    ; The Array has BOARD_ARRAY_ELEMENTS elements.
+    input_buffer        resd 1
+    str_buffer          resb 1
 segment .text
 ; Function console_print. 
 ; Parameters: string, string length (first put length to stack and then the string) 
@@ -39,13 +42,13 @@ game_run:
 .init_board:
     mov byte [board + ecx], 0
     loop .init_board
-    
-    mov byte [board + 4], 9
 
     push str_game_title_len
     push str_game_title
     call console_print
     add esp, 8
+
+
     
     call game_draw_board
 
@@ -55,20 +58,38 @@ game_run:
     leave
     ret
 
+
+
+; Draw the actual game board
 game_draw_board:
     enter 0, 0
     pusha
     ; We have 6 rows to print
-    mov dword ecx, [board_row_cnt]
+    mov dword ecx, BOARD_ARRAY_ELEMENTS
 .print_row:
-    mov esi, [board_row_cnt]
+    mov esi, BOARD_ARRAY_ELEMENTS
     sub esi, ecx
+    
+    mov eax, [board + esi]
+    add eax, 48
+    mov [str_buffer], eax
 
-    ;push dword board_row_cnt
-    ;push board_row
-    ;call console_print
-    ;add esp, 8
-    ;loop .print_row
+    push dword 1
+    push dword str_buffer
+    call console_print
+    add esp, 8
+
+    mov edx, 0              ; Set edx 0 for dividing
+    mov eax, esi            ; We want to divide the current index
+    inc eax                 ; We add 0 so we start by 1
+    mov ebx, 3              ; We want to divide with 3
+    div dword ebx           ; Divide current index with 3
+    cmp edx, 0              ; When the rest is 0 we print a new line
+    jnz .no_nl
+    call console_print_nl
+.no_nl:
+
+    loop .print_row
 
     popa
     leave
