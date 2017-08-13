@@ -31,7 +31,6 @@ segment .data
 segment .bss
     board               resb BOARD_ARRAY_ELEMENTS   ; Create Array with elements with a byte size.
                                                     ; The Array has BOARD_ARRAY_ELEMENTS elements.
-    input_buffer        resd 1
     str_buffer          resb 1
 segment .text
 ; Function console_print. 
@@ -48,15 +47,23 @@ game_run:
 
     call game_draw_board
     ; Game loop
+    mov ecx, BOARD_ARRAY_ELEMENTS
 .run:
-    ;mov byte [board + 1], 1
-    push dword 1
+    ; Divide actual index so we can determine which players round it is by dividing with 2
+    mov eax, ecx
+    mov ebx, 2
+    mov edx, 0
+    div ebx
+    ; Increment rest by one so we get 1 for player 1 and 2 for player 2
+    inc edx
+
+    push dword edx
     call game_handle_input
     add esp, 4
 
     call game_draw_board
-
-    ;jmp .run
+    
+    loop .run
 
     popa
     leave
@@ -99,18 +106,17 @@ game_handle_input:
     sub eax, 48                 ; Make input from ascii char to number
     mov esi, eax                ; Store selection in esi
     dec esi                     ; Decrement by one because the array index is lower then the shown
-    mov ecx, [board + esi]
+    mov cl, [board + esi]
     
     cmp esi, BOARD_ARRAY_ELEMENTS ; Check if choosen num is in array 
     jae .ask_for_input          ; If index is not in array, we ask again
 
-    cmp ecx, 0                  ; Check if the field is already set
+    cmp cl, 0                  ; Check if the field is already set
     jne .ask_for_input          ; Ask again if field was already set
     
     ; Store in board which field player has choosen
     mov byte bh, [ebp+8]
     mov byte [board + esi], bh
-    
 
     popa
     leave
