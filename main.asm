@@ -21,7 +21,6 @@ segment .text
     _start:
 asm_main:
     call game_run
-
 ; exit
     mov eax, 1
     int 0x80

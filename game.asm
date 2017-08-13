@@ -28,6 +28,7 @@ segment .data
     str_player_choose:      db 'Player x. Which field?', 0xA
     str_player_choose_len:  equ $-str_player_choose
     player_choose_num_pos:  dd 7
+    unset_field_num:        db 9
     ;str_player2:            db 'Player 2. Which field?', 0xA
 segment .bss
     board               resb BOARD_ARRAY_ELEMENTS   ; Create Array with elements with a byte size.
@@ -40,10 +41,11 @@ game_run:
     enter 0, 0
     pusha
     
-    ; Init Array with zeros
+    ; Init Array with 9s, so a unset field have a 9
     mov ecx, BOARD_ARRAY_ELEMENTS           ; Loop backwards from Array size to 0
 .init_board:
-    mov byte [board + ecx], 0
+    mov al, [unset_field_num]
+    mov byte [board + ecx - 1], al
     loop .init_board
 
     call game_draw_board
@@ -52,11 +54,12 @@ game_run:
                                             ; amount of rounds, too.
 
 ; Debug
-    mov byte [board + 4], 1
-    mov byte [board + 3], 1
-    mov byte [board + 5], 1
+    mov byte [board+0], 1
+    mov byte [board+1], 1
+    mov byte [board+2], 1
+    call game_draw_board
     
-    call game_is_winner
+    call game_get_winner
     add eax, 48
     
     mov [str_buffer], eax
@@ -140,7 +143,7 @@ game_handle_input:
     cmp esi, BOARD_ARRAY_ELEMENTS ; Check if choosen num is in array 
     jae .ask_for_input          ; If index is not in array, we ask again
 
-    cmp cl, 0                  ; Check if the field is already set
+    cmp cl, [unset_field_num]   ; Check if the field is already set
     jne .ask_for_input          ; Ask again if field was already set
     
     ; Store in board which field player has choosen
@@ -151,15 +154,107 @@ game_handle_input:
     leave
     ret
 
-; Returns 0 in eax when there is no winner and 1 in eax when there is a winner 
-game_is_winner:
-    enter 0, 0
+; Returns 0 in eax when there is no winner. Returns 1 when player 1 wins and 2 when player 2 wins
+game_get_winner:
+    enter 4, 0                      ; Save return value temporary in local var
     pusha
+    mov dword [ebp-4], 0            ; Set return value to 0 by default
     
+    ; Check fields 0, 1, 2
+    ; Set Fields of player 1 have number 1, so if the sum off the thee is 3 Player 1 wins.
+    ; If the sum is 6 Player 2 wins (2+2+2).
+    ; Unset fields have the number 9 so if one of the fields is unset the sum is min 9.
+    xor eax, eax
+    add  al, [board+0]
+    add  al, [board+1]
+    add  al, [board+2]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
     
+    ; Check fields 3, 4, 5
+    xor eax, eax
+    add al, [board+3]
+    add al, [board+4]
+    add al, [board+5]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
     
+    ; Check fields 6, 7, 8
+    xor eax, eax
+    add al, [board+6]
+    add al, [board+7]
+    add al, [board+8]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
+
+    ; Check fields 0, 3, 6
+    xor eax, eax
+    add al, [board+0]
+    add al, [board+3]
+    add al, [board+6]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
+    
+    ; Check fields 1, 4, 7
+    xor eax, eax
+    add al, [board+1]
+    add al, [board+4]
+    add al, [board+7]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
+    
+    ; Check fields 2, 5, 8
+    xor eax, eax
+    add al, [board+2]
+    add al, [board+5]
+    add al, [board+8]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
+
+    ; Check fields 0, 4, 8
+    xor eax, eax
+    add al, [board+0]
+    add al, [board+4]
+    add al, [board+8]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
+
+    ; Check fields 2, 4, 6
+    xor eax, eax
+    add al, [board+2]
+    add al, [board+4]
+    add al, [board+6]
+    cmp al, 3
+    jz .set_winner_player1
+    cmp al, 6
+    jz .set_winner_player2
+
+
+    jmp .ret
+.set_winner_player1:
+    mov dword [ebp-4], 1
+    jmp .ret
+.set_winner_player2:
+    mov dword [ebp-4], 2
+    jmp .ret
+.ret:
 
     popa
+    mov eax, [ebp-4]
     leave
     ret
 
