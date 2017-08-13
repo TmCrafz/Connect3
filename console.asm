@@ -12,7 +12,7 @@ segment .text
 ; Print the given string on command line
 ; Parameters: string, string length (first put length to stack and then the string) 
 console_print:
-    enter 16, 0
+    enter 0, 0
     ;push ebp
     ;mov ebp, esp
     ;sub esp, 16              ; Memory for 4 local valriables on stack 
@@ -26,12 +26,6 @@ console_print:
     mov ebx, 1              ; Stdout (print to terminal)
     mov eax, 4              ; Number of system call (4 = sys_write)
     int 0x80                ; Call kernel
-
-    ; Restore content of registers
-    mov eax, [ebp-4]        ; Restore eax from stack  
-    mov ebx, [ebp-8]        ; Restore ebx from stack
-    mov ecx, [ebp-12]       ; Restore ecx from stack  
-    mov edx, [ebp-16]       ; Restore edx from stack
     
     popa
     ;mov esp, ebp            ; Free local variables from stack
@@ -41,17 +35,16 @@ console_print:
 
 ; Print new line
 console_print_nl:
-    enter 20, 0
+    enter 4, 0
     pusha
     
-    mov dword [ebp-20], 0xA ; Store new line in local variable
+    mov dword [ebp-4], 0xA ; Store new line in local variable
     ; Print to console
     mov edx, 1              ; Length of string
-    lea ecx, [ebp-20]       ; Adress of string to write
+    lea ecx, [ebp-4]       ; Adress of string to write
     mov ebx, 1              ; Stdout (print to terminal)
     mov eax, 4              ; Number of system call (4 = sys_write)
     int 0x80                ; Call kernel
-
     
     popa
     leave
@@ -60,7 +53,8 @@ console_print_nl:
 ; Read from command line and store input into given adress
 ; Parameters: adress, max input length
 console_read:
-    enter 16, 0
+    ;enter 16, 0
+    enter 0, 0
     pusha
     
     mov edx, [ebp+12]       ; Max length of input
