@@ -1,5 +1,6 @@
 global utils_number_to_decimal_ascii
 global utils_get_decimal_length
+global utils_are_three_equals
 extern console_print
 extern console_print_nl
 
@@ -67,3 +68,30 @@ utils_get_decimal_length:
     mov eax, [ebp-4]            ; Return the length (return in eax register)
     leave
     ret
+
+; Check if the three given 32Bit values are equals
+; Returns 1 in eax when there are equals, else return 0
+; Parameters: value1, value2, value3
+utils_are_three_equals:
+    enter 4, 0
+    pusha
+    mov eax, [ebp+8]
+    mov ebx, [ebp+12]
+    cmp eax, ebx
+    jnz .not_equals
+    mov eax, [ebp+16]
+    cmp eax, ebx
+    jnz .not_equals
+    ; Equals
+    mov dword [ebp-4], 1
+    jmp .ret
+.not_equals:
+    mov dword [ebp-4], 0
+    jmp .ret
+.ret:
+    popa
+    mov eax, [ebp-4]
+    leave
+    ret
+
+

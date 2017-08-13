@@ -5,6 +5,7 @@ extern console_print_nl
 extern console_read_char
 
 extern utils_number_to_decimal_ascii
+extern utils_are_three_equals
 
 extern debug_print_regs
 
@@ -47,7 +48,30 @@ game_run:
 
     call game_draw_board
     ; Game loop
-    mov ecx, BOARD_ARRAY_ELEMENTS
+    mov ecx, BOARD_ARRAY_ELEMENTS           ; The count of Elements in the array is the max
+                                            ; amount of rounds, too.
+
+; Debug
+    mov byte [board + 4], 1
+    mov byte [board + 3], 1
+    mov byte [board + 5], 1
+    
+    call game_is_winner
+    add eax, 48
+    
+    mov [str_buffer], eax
+    push dword 1
+    push dword str_buffer
+    call console_print
+    add esp, 8
+    call console_print_nl
+    ;call game_draw_board
+    jmp .end_game
+
+; !Debug
+
+
+
 .run:
     ; Divide actual index so we can determine which players round it is by dividing with 2
     mov eax, ecx
@@ -60,10 +84,15 @@ game_run:
     push dword edx
     call game_handle_input
     add esp, 4
+    
+    ;push dword 4
+    ;call game_is_winner
+    ;add esp, 4
 
     call game_draw_board
     
     loop .run
+.end_game:                      ; label for debug purpose
 
     popa
     leave
@@ -117,6 +146,18 @@ game_handle_input:
     ; Store in board which field player has choosen
     mov byte bh, [ebp+8]
     mov byte [board + esi], bh
+
+    popa
+    leave
+    ret
+
+; Returns 0 in eax when there is no winner and 1 in eax when there is a winner 
+game_is_winner:
+    enter 0, 0
+    pusha
+    
+    
+    
 
     popa
     leave
