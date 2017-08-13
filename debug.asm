@@ -84,7 +84,6 @@ debug_create_reg_line:
     enter 0, 0
     pusha
     
-    ; EAX register
     mov ebx, [ebp+8]
     mov dword [str_reg_title], ebx
     push dword str_reg_title_len

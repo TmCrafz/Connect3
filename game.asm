@@ -24,8 +24,10 @@ extern debug_print_regs
 segment .data
     str_game_title:         db 'Connect3', 0xA
     str_game_title_len:     equ $-str_game_title
-    str_player1:            db 'Player 1. Which field?', 0xA
-    str_player2:            db 'Player 2. Which field?', 0xA
+    str_player_choose:      db 'Player x. Which field?', 0xA
+    str_player_choose_len:  equ $-str_player_choose
+    player_choose_num_pos:  dd 7
+    ;str_player2:            db 'Player 2. Which field?', 0xA
 segment .bss
     board               resb BOARD_ARRAY_ELEMENTS   ; Create Array with elements with a byte size.
                                                     ; The Array has BOARD_ARRAY_ELEMENTS elements.
@@ -47,25 +49,70 @@ game_run:
     call game_draw_board
     ; Game loop
 .run:
-    call game_get_input
+    ;mov byte [board + 1], 1
+    push dword 1
+    call game_handle_input
+    add esp, 4
 
     call game_draw_board
 
-    jmp .run
+    ;jmp .run
 
     popa
     leave
     ret
 
-; Ask user which field he want to set
-; return choosen field in eax
-game_get_input:
+; Ask user which field he want to set and set the field in board
+; Parameters: actual player number (1 or 2)
+game_handle_input:
     enter 0, 0
-    ; No pusha and popa here, because eax is the only register which es editet and we want to
-    ; return eax
+    pusha
+    
+    ; Make given palyer num to ascii (by adding 48) and put the char to the right pos in the string
+    mov esi, [player_choose_num_pos]           ; The pos of the player char num in string
+    mov bl, [ebp+8]
+    add bl, 48
+    mov byte [str_player_choose + esi], bl
 
+    jmp .next
+    ; Determine which player gives the input and show the right text
+    mov esi , [player_choose_num_pos]           ; The pos of the player char num in string
+    cmp dword [ebp+8], 1
+    jz .thenblock
+.elseblock:
+    mov byte [str_player_choose + esi], '2'
+    jmp .next
+.thenblock:
+    mov byte [str_player_choose + esi], '1'
+.next:    
+
+.end_str_choose:
+    ; Print text which explains whichs players input it is
+    push str_player_choose_len
+    push str_player_choose
+    call console_print
+    add esp, 8
+
+    ; Ask player for input
+.ask_for_input:
     call console_read_char
+    sub eax, 48                 ; Make input from ascii char to number
+    mov esi, eax                ; Store selection in esi
+    dec esi                     ; Decrement by one because the array index is lower then the shown
+    mov ecx, [board + esi]
+    
+    cmp esi, BOARD_ARRAY_ELEMENTS ; Check if choosen num is in array 
+    jae .ask_for_input          ; If index is not in array, we ask again
 
+    cmp ecx, 0                  ; Check if the field is already set
+    jne .ask_for_input          ; Ask again if field was already set
+    
+    ; Store in board which field player has choosen
+    mov byte bh, [ebp+8]
+    mov byte [board + esi], bh
+    
+
+    popa
     leave
     ret
 
