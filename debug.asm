@@ -219,24 +219,25 @@ debug_number_to_hex_ascii:
     ; and finally the first one.
     mov eax, [ebp+8]            ; Store number which we want to convert in eax
     mov ebx, [ebp+12]
-    mov dword [ebx], 0x30303030 ; Fill string with ascii zeros so we have 00000000
+    mov dword [ebx], '0000'     ; Fill string with ascii zeros so we have 00000000
+    mov dword [ebx+4], '0000'
     mov ecx, 8                  ; The max length is 8, so we start loop by index 8
 .pos_to_string:
     mov edx, 0
     div dword [base_16]         ; Divide number in eax with 10 (Base of dezimal numbers)
     ; In eax is the result of the division and in edx the rest
 ; IF ELSE BLOCK
-    cmp edx, 10
+    cmp dl, 10
     jc .add_num_char             ; CF = 1 => rest < 10
     ; Else (when edx < 10 )
-    add edx, 65                 ; Add 65 because the A is represented by it in ascii table
-    sub edx, 10                 ; Sub 10 so we start by 65 for 'A'
+    add dl, 65                  ; Add 65 because the A is represented by it in ascii table
+    sub dl, 10                  ; Sub 10 so we start by 65 for 'A'
     
     jmp .end_if_block
     ; ! Else
 .add_num_char:
     ; if edx < 10
-    add edx, 48                 ; Add 48 to represent number as ascii number
+    add dl, 48                 ; Add 48 to represent number as ascii number
     ; !edx < 10
 .end_if_block:        
 ; !END IF BLOCK
