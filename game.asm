@@ -29,6 +29,9 @@ segment .data
     str_player_choose_len:  equ $-str_player_choose
     player_choose_num_pos:  dd 7
     unset_field_num:        db 9
+    str_player_wins:       db 'Player x wins!', 0xA
+    str_player_wins_len:  equ $-str_player_wins
+    player_wins_num_pos:  dd 7
     ;str_player2:            db 'Player 2. Which field?', 0xA
 segment .bss
     board               resb BOARD_ARRAY_ELEMENTS   ; Create Array with elements with a byte size.
@@ -53,28 +56,6 @@ game_run:
     mov ecx, BOARD_ARRAY_ELEMENTS           ; The count of Elements in the array is the max
                                             ; amount of rounds, too.
 
-; Debug
-    mov byte [board+0], 1
-    mov byte [board+1], 1
-    mov byte [board+2], 1
-    call game_draw_board
-    
-    call game_get_winner
-    add eax, 48
-    
-    mov [str_buffer], eax
-    push dword 1
-    push dword str_buffer
-    call console_print
-    add esp, 8
-    call console_print_nl
-    ;call game_draw_board
-    jmp .end_game
-
-; !Debug
-
-
-
 .run:
     ; Divide actual index so we can determine which players round it is by dividing with 2
     mov eax, ecx
@@ -87,13 +68,28 @@ game_run:
     push dword edx
     call game_handle_input
     add esp, 4
-    
+
     ;push dword 4
     ;call game_is_winner
     ;add esp, 4
 
     call game_draw_board
-    
+    call game_get_winner
+    cmp eax, 0
+    jnz .there_is_a_winner
+    jmp .after_winner
+.there_is_a_winner:
+    add al, 48                      ; Get winner number as ascii
+    mov esi, [player_wins_num_pos]  ; Get pos of player number in string and store it in esi
+    mov [str_player_wins + esi], al ; Save ascii player number at the right pos in string
+    ; Print winner string
+    push str_player_wins_len
+    push str_player_wins
+    call console_print
+    add esp, 8
+    ; End game
+    jmp .end_game
+.after_winner:
     loop .run
 .end_game:                      ; label for debug purpose
 
