@@ -264,8 +264,6 @@ game_draw_board:
     call console_print
     add esp, 8
     
-    
-    
     ; We have 6 rows to print
     mov dword ecx, BOARD_ARRAY_ELEMENTS
 .print_row:
